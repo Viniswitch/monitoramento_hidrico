@@ -75,17 +75,31 @@ class NoSimulado:
         self.client.disconnect()
         self.client.loop_stop()
 
-cenario = sys.argv[1] if len(sys.argv) > 1 else "normal"
-if cenario not in CENARIOS:
-    print("Cenario invalido:", cenario)
-    print("Opcoes:", ", ".join(CENARIOS))
-    sys.exit(1)
+NOS = {
+    "reserva":   {"cenarios": {"normal": {"distancia": 1.204}}, "mede_qualidade": False},
+    "principal": {"cenarios": CENARIOS,                         "mede_qualidade": True},
+    "saida":     {"cenarios": {"normal": {"distancia": 0.800}}, "mede_qualidade": False},
+}
 
-nos = [
-    NoSimulado("reserva", {"distancia": 1.204}),
-    NoSimulado("principal", CENARIOS[cenario], mede_qualidade=True),
-    NoSimulado("saida", {"distancia": 0.800}),
-]
+pedidos = sys.argv[1:] or list(NOS)
+
+nos = []
+for pedido in pedidos:
+    nome, _, cenario = pedido.partition(":")
+    cenario = cenario or "normal"
+    if nome not in NOS:
+        print("No invalido:", nome)
+        print("Opcoes:", ", ".join(NOS))
+        sys.exit(1)
+    if nome in [no.nome for no in nos]:
+        print("No repetido:", nome)
+        sys.exit(1)
+    cenarios = NOS[nome]["cenarios"]
+    if cenario not in cenarios:
+        print(f"Cenario invalido para {nome}:", cenario)
+        print("Opcoes:", ", ".join(cenarios))
+        sys.exit(1)
+    nos.append(NoSimulado(nome, cenarios[cenario], NOS[nome]["mede_qualidade"]))
 
 for no in nos:
     no.iniciar()
