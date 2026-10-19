@@ -2,3 +2,5 @@
 docs/originais/
 .venv/
 __pycache__/
+   .idea/
+   
