@@ -64,7 +64,7 @@ O que se perde é a leitura direta da condutividade da água do poço. Para a V1
 
 Economia de R\$ 415,00 em relação à primeira versão (6 nós, R\$ 1.497,00): 2 nós a menos com as caixas interligadas (R\$ 296,00) e 1 nó a menos porque a condutividade passou a usar o ESP32 da caixa principal (R\$ 119,00). Se as caixas não estiverem interligadas: 5 nós, R\$ 1.378,00.
 
-Sem gateway dedicado: o proprietário confirmou que o computador da recepção pode rodar o software do sistema (broker MQTT, serviço Python, banco de dados e dashboard), eliminando o Raspberry Pi, o cartão microSD e a fonte dedicada do orçamento. Falta confirmar apenas o sistema operacional e as especificações desse computador, para garantir que ele roda a stack sem problema.
+Sem gateway dedicado: o proprietário confirmou que o computador da recepção pode rodar o software do sistema (broker MQTT e um programa para Windows com ingestão, regras, banco de dados e painel), eliminando o Raspberry Pi, o cartão microSD e a fonte dedicada do orçamento. Falta confirmar apenas o sistema operacional e as especificações desse computador, para garantir que ele roda a stack sem problema.
 
 ## 4. Fluxo do sistema
 

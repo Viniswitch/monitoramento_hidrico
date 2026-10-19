@@ -12,7 +12,7 @@ Este documento reúne as quatro etapas de arquitetura da informação desta Spri
 >
 > O sistema monitora e avisa. Ele não aciona válvulas: a decisão de comprar água ou de diluir (abrir e fechar registros) continua com o operador, a partir do que o painel mostra. Medição de vazão (V2) e automação das válvulas (V3) são versões futuras, ainda não comprometidas, e não aparecem nas telas.
 >
-> O painel e os alertas existem só nos computadores, sem aviso no celular.
+> O painel e os alertas existem só no computador da recepção, sem aviso no celular.
 
 ## Etapa 1 · Requisitos e funcionalidades
 
@@ -59,11 +59,11 @@ F-01 a F-04 são o núcleo do valor do sistema. F-05 e F-08 não constam no proj
 
 - **Limites.** Nível abaixo de 10% em qualquer sistema, ou condutividade acima de 1.000 μS/cm, é tratado como fora do limite e dispara alerta.
 
-- **Popup.** Aparece em qualquer computador com o painel aberto, uma única vez por ocorrência, com três botões: "Ver no painel" (abre o Painel geral com o sistema em alerta destacado), "Marcar como visto" e "Fechar". Fechar não apaga o alerta. Se nenhum computador estiver com o painel aberto, não há popup, e o alerta fica na lista até ser visto.
+- **Popup.** Aparece no computador da recepção, com o programa em execução (mesmo minimizado), uma única vez por ocorrência, com três botões: "Ver no painel" (abre o Painel geral com o sistema em alerta destacado), "Marcar como visto" e "Fechar". Fechar não apaga o alerta. Sem o programa em execução não há medição nem popup, por isso ele inicia com o Windows e, ao fechar a janela, minimiza para a bandeja. O alerta ocorrido com ninguém olhando a tela fica na lista até ser visto.
 
 - **Alerta ativo.** Enquanto a condição continua, o alerta fica na lista de alertas (T-04) com um ícone de alerta, e o link Alertas do menu recebe o mesmo ícone.
 
-- **Alerta visto.** "Marcar como visto", no popup ou na T-04, muda o status do alerta de novo para visto e registra o momento. O status fica no servidor e vale para todos os computadores.
+- **Alerta visto.** "Marcar como visto", no popup ou na T-04, muda o status do alerta de novo para visto e registra o momento. O status fica gravado no banco do programa.
 
 ## Etapa 2 · Mapa de telas
 
@@ -89,7 +89,7 @@ A coluna "No protótipo" indica quais telas entram na simulação e no teste de 
 
 ## Etapa 3 · Fluxo de tarefas
 
-O fluxo descreve, do primeiro ao último clique, o caminho do usuário em cada tarefa. Uma ação é um clique ou uma digitação, e ler a tela não conta. O fluxo ideal é o menor caminho sem erro e serve de referência para contar desvios, tempo e taxa de conclusão na prova de conceito. O ponto de partida é o Painel geral aberto no navegador, exceto no TF-02, que começa com o popup.
+O fluxo descreve, do primeiro ao último clique, o caminho do usuário em cada tarefa. Uma ação é um clique ou uma digitação, e ler a tela não conta. O fluxo ideal é o menor caminho sem erro e serve de referência para contar desvios, tempo e taxa de conclusão na prova de conceito. O ponto de partida é o Painel geral aberto, exceto no TF-02, que começa com o popup.
 
 ### 3.1 Fluxos principais, testados na prova de conceito
 
@@ -126,7 +126,7 @@ Menu de links que aparece em todas as telas. É um menu lateral fixo, porque as 
 
 | **Ordem** | **Link**                 | **Tela** | **Observação**                                                                          |
 |-----------|--------------------------|----------|-----------------------------------------------------------------------------------------|
-| **1**     | Painel geral             | T-01     | Página inicial. O título "Painel de Monitoramento Hídrico", no topo, também leva a ela. |
+| **1**     | Painel geral             | T-01     | Tela inicial. O título "Painel de Monitoramento Hídrico", no topo, também leva a ela. |
 | **2**     | Nível dos sistemas       | T-02     | —                                                                                       |
 | **3**     | Condutividade da mistura | T-03     | —                                                                                       |
 | **4**     | Alertas                  | T-04     | Recebe o ícone de alerta enquanto houver alerta ativo.                                  |

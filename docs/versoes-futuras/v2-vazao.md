@@ -36,7 +36,7 @@ Esta é uma possível evolução futura do sistema (V2) — não faz parte do es
 
 Com a vazão real das duas origens e a condutividade da mistura que a V1 já mede na caixa principal, o sistema passa a calcular a proporção real da mistura e a estimar a condutividade da água do poço por balanço de massa: `C_poço = (C_mistura × (V_poço + V_tratada) − C_tratada × V_tratada) / V_poço`, com a condutividade da água tratada medida uma vez. Também passa a registrar o consumo real de água (útil para acompanhar o gasto com água tratada comprada) e pode sinalizar uma vazão muito acima do padrão por tempo prolongado como possível vazamento — um alerta que a V1, sem medir vazão, não consegue gerar.
 
-*Essa atualização depende da V1 já estar funcionando (ela usa a mesma rede Wi-Fi, o mesmo gateway e o mesmo dashboard) e continua sendo apenas uma possibilidade em avaliação, não um compromisso de entrega.*
+*Essa atualização depende da V1 já estar funcionando (ela usa a mesma rede Wi-Fi, o mesmo gateway e o mesmo painel) e continua sendo apenas uma possibilidade em avaliação, não um compromisso de entrega.*
 
 ## 4. Fluxo do sistema
 
