@@ -11,7 +11,7 @@ BROKER_PORT = 1883
 INTERVALO_S = 5
 
 # Parametros HIPOTETICOS do reservatorio Principal (contrato, secao 6):
-#   H = (sensor ate o fundo) / H_UTIL = (nivel da agua ate o fundo) / d = (distância do sensor até o nível da água)
+#   H = (sensor ate o fundo) / H_UTIL = (nivel da agua ate o fundo com o reservatorio cheio) / d = (distância do sensor até o nível da água)
 #   H_SONDA = (Altura em que a sonda de condutividade está instalada, medida a partir do fundo)
 #   H = 1.50 m , H_UTIL = 1.20 m , H_SONDA = 0.05 m
 #   d = H - (nivel% / 100) * H_UTIL
@@ -24,9 +24,10 @@ CENARIOS = {
 }
 
 class NoSimulado:
-    def __init__(self, nome, cenario):
+    def __init__(self, nome, base, mede_qualidade=False):
         self.nome = nome
-        self.cenario = cenario
+        self.base = base
+        self.mede_qualidade = mede_qualidade
         self.topico_telemetria = f"hidrico/{nome}/telemetria"
         self.topico_status = f"hidrico/{nome}/status"
         self.conectado = threading.Event()
@@ -51,19 +52,17 @@ class NoSimulado:
             sys.exit(1)
 
     def gerar_leitura(self):
-        base = CENARIOS[self.cenario]
-        distancia = base["distancia"] + random.uniform(-0.003, 0.003)
-        temperatura = base["temperatura"] + random.uniform(-0.2, 0.2)
-        if base["condutividade"] is None:
-            condutividade = None
-        else:
-            condutividade = max(0, round(base["condutividade"] + random.uniform(-10, 10)))
-        return {
-            "versao": 1,
-            "distancia_m": round(distancia, 3),
-            "condutividade_us_cm": condutividade,
-            "temperatura_c": round(temperatura, 1),
-        }
+        distancia = self.base["distancia"] + random.uniform(-0.003, 0.003)
+        leitura = {"versao": 1, "distancia_m": round(distancia, 3)}
+        if self.mede_qualidade:
+            temperatura = self.base["temperatura"] + random.uniform(-0.2, 0.2)
+            if self.base["condutividade"] is None:
+                condutividade = None
+            else:
+                condutividade = max(0, round(self.base["condutividade"] + random.uniform(-10, 10)))
+            leitura["condutividade_us_cm"] = condutividade
+            leitura["temperatura_c"] = round(temperatura, 1)
+        return leitura
 
     def publicar_telemetria(self):
         dados = self.gerar_leitura()
@@ -76,20 +75,27 @@ class NoSimulado:
         self.client.disconnect()
         self.client.loop_stop()
 
-
 cenario = sys.argv[1] if len(sys.argv) > 1 else "normal"
 if cenario not in CENARIOS:
     print("Cenario invalido:", cenario)
     print("Opcoes:", ", ".join(CENARIOS))
     sys.exit(1)
 
-no = NoSimulado("principal", cenario)
-no.iniciar()
+nos = [
+    NoSimulado("reserva", {"distancia": 1.204}),
+    NoSimulado("principal", CENARIOS[cenario], mede_qualidade=True),
+    NoSimulado("saida", {"distancia": 0.800}),
+]
+
+for no in nos:
+    no.iniciar()
 
 try:
     while True:
-        no.publicar_telemetria()
+        for no in nos:
+            no.publicar_telemetria()
         time.sleep(INTERVALO_S)
 except KeyboardInterrupt:
     print("Encerrando (desligamento planejado)")
-    no.encerrar()
+    for no in nos:
+        no.encerrar()
