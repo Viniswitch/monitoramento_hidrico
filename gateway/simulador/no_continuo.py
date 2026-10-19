@@ -1,17 +1,14 @@
 import json
 import time
-import paho.mqtt.client as mqtt
 import random
 import sys
 import threading
 
+import paho.mqtt.client as mqtt
+
 BROKER_HOST = "localhost"
 BROKER_PORT = 1883
-NO = "principal"
-TOPICO_TELEMETRIA = f"hidrico/{NO}/telemetria"
-TOPICO_STATUS = f"hidrico/{NO}/status"
 INTERVALO_S = 5
-conectado = threading.Event()
 
 # Parametros HIPOTETICOS do reservatorio Principal (contrato, secao 6):
 #   H = (sensor ate o fundo) / H_UTIL = (nivel da agua ate o fundo) / d = (distância do sensor até o nível da água)
@@ -26,64 +23,73 @@ CENARIOS = {
     "sensor_falho":       {"distancia": 0.512, "condutividade": None, "temperatura": 27.1},
 }
 
+class NoSimulado:
+    def __init__(self, nome, cenario):
+        self.nome = nome
+        self.cenario = cenario
+        self.topico_telemetria = f"hidrico/{nome}/telemetria"
+        self.topico_status = f"hidrico/{nome}/status"
+        self.conectado = threading.Event()
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=nome)
+        self.client.on_connect = self._ao_conectar
+        self.client.will_set(self.topico_status, "offline", qos=1, retain=True)
+
+    def _ao_conectar(self, client, userdata, flags, reason_code, properties):
+        if reason_code.is_failure:
+            print(f"[{self.nome}] Falha ao conectar:", reason_code)
+        else:
+            print(f"[{self.nome}] Conectado ao broker")
+            client.publish(self.topico_status, "online", qos=1, retain=True)
+            self.conectado.set()
+
+    def iniciar(self):
+        self.client.connect(BROKER_HOST, BROKER_PORT, keepalive=10)
+        self.client.loop_start()
+        if not self.conectado.wait(timeout=10):
+            print(f"[{self.nome}] Nao foi possivel conectar ao broker em 10 s")
+            self.client.loop_stop()
+            sys.exit(1)
+
+    def gerar_leitura(self):
+        base = CENARIOS[self.cenario]
+        distancia = base["distancia"] + random.uniform(-0.003, 0.003)
+        temperatura = base["temperatura"] + random.uniform(-0.2, 0.2)
+        if base["condutividade"] is None:
+            condutividade = None
+        else:
+            condutividade = max(0, round(base["condutividade"] + random.uniform(-10, 10)))
+        return {
+            "versao": 1,
+            "distancia_m": round(distancia, 3),
+            "condutividade_us_cm": condutividade,
+            "temperatura_c": round(temperatura, 1),
+        }
+
+    def publicar_telemetria(self):
+        dados = self.gerar_leitura()
+        self.client.publish(self.topico_telemetria, json.dumps(dados), qos=0)
+        print(f"[{self.nome}] Telemetria enviada")
+
+    def encerrar(self):
+        info = self.client.publish(self.topico_status, "offline", qos=1, retain=True)
+        info.wait_for_publish()
+        self.client.disconnect()
+        self.client.loop_stop()
+
+
 cenario = sys.argv[1] if len(sys.argv) > 1 else "normal"
 if cenario not in CENARIOS:
     print("Cenario invalido:", cenario)
     print("Opcoes:", ", ".join(CENARIOS))
     sys.exit(1)
 
-
-def ao_conectar(client, userdata, flags, reason_code, properties):
-    if reason_code.is_failure:
-        print("Falha ao conectar:", reason_code)
-    else:
-        print("Conectado ao broker")
-        client.publish(TOPICO_STATUS, "online", qos=1, retain=True)
-        conectado.set()
-
-
-def gerar_leitura():
-    base = CENARIOS[cenario]
-    distancia = base["distancia"] + random.uniform(-0.003, 0.003)
-    temperatura = base["temperatura"] + random.uniform(-0.2, 0.2)
-    if base["condutividade"] is None:
-        condutividade = None
-    else:
-        condutividade = max(0, round(base["condutividade"] + random.uniform(-10, 10)))
-    return {
-        "versao": 1,
-        "distancia_m": round(distancia, 3),
-        "condutividade_us_cm": condutividade,
-        "temperatura_c": round(temperatura, 1),
-    }
-
-
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=NO)
-client.on_connect = ao_conectar
-
-client.will_set(TOPICO_STATUS, "offline", qos=1, retain=True)
-client.connect(BROKER_HOST, BROKER_PORT, keepalive=10)
-
-client.loop_start()
-
-if not conectado.wait(timeout=10):
-    print("Nao foi possivel conectar ao broker em 10 s")
-    client.loop_stop()
-    sys.exit(1)
-
+no = NoSimulado("principal", cenario)
+no.iniciar()
 
 try:
     while True:
-        dados = gerar_leitura()
-        client.publish(TOPICO_TELEMETRIA, json.dumps(dados), qos=0)
-        print("Telemetria enviada")
+        no.publicar_telemetria()
         time.sleep(INTERVALO_S)
-
-
 except KeyboardInterrupt:
     print("Encerrando (desligamento planejado)")
-    info = client.publish(TOPICO_STATUS, "offline", qos=1, retain=True)
-    info.wait_for_publish()
-    client.disconnect()
-
-    client.loop_stop()
+    no.encerrar()
