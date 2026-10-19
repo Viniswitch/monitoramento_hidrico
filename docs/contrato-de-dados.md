@@ -58,6 +58,7 @@ O programa assina `hidrico/+/telemetria` e `hidrico/+/status`.
 - **Telemetria não retida:** como o programa carimba o horário na chegada, uma leitura retida seria entregue de novo ao reiniciar e pareceria recente.
 - **Status retido:** ao iniciar, o programa conhece na hora o estado de cada nó.
 - **LWT:** o nó registra no broker, ao conectar, a mensagem `offline` para o tópico de status. Se o nó sumir sem avisar, o broker a publica.
+- **Desligamento planejado:** a desconexão limpa descarta o testamento (no `mosquitto_sub` do Windows, até o Ctrl+C o dispara). Por isso, antes de desconectar de propósito (por exemplo, para reiniciar), o nó publica `offline` (retido) por conta própria. A queda inesperada continua coberta pelo testamento.
 - **Identificador de cliente MQTT:** único por nó; usar o próprio nome do nó.
 - **Keepalive:** a definir (exemplo: 30 s). O broker considera o nó perdido após cerca de 1,5 vez esse valor.
 
