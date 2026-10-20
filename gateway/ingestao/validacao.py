@@ -1,5 +1,6 @@
 NOS_VALIDOS = {"reserva", "principal", "saida"}
 TIPOS_VALIDOS = {"telemetria", "status"}
+STATUS_VALIDOS = {"online", "offline"}
 
 def interpretar_topico(topico):
     partes = topico.split("/")
@@ -14,6 +15,12 @@ def interpretar_topico(topico):
     if tipo not in TIPOS_VALIDOS:
         raise ValueError(f"tipo desconhecido '{tipo}': {topico}")
     return no, tipo
+
+def interpretar_status(payload):
+    texto = payload.decode("utf-8")
+    if texto not in STATUS_VALIDOS:
+        raise ValueError(f"status invalido: '{texto}'")
+    return texto
 
 
 if __name__ == "__main__":
@@ -31,4 +38,10 @@ if __name__ == "__main__":
             print(t, "->", resultado)
         except ValueError as erro:
             print("REJEITADO:", erro)
+            
+    for p in [b"online", b"offline", b"Online", b"ligado", b"", b"\xff\xfe"]:
+        try:
+            print(p, "->", interpretar_status(p))
+        except ValueError as erro:
+            print(p, "REJEITADO:", erro)
             
