@@ -135,6 +135,7 @@ void app_main(void){
         int falha_sensor = 0, mediana_bruta, leitura_bruta, tensao_mv, leituras_tds[10];
         float duracao, distancia_cm, distancia_m, distancia_final, leituras_hcsr[5];
         char payload[96];
+        payload[0] = '\0';
 
         for (int i = 0; i < 10; i++) {
 
@@ -219,9 +220,20 @@ void app_main(void){
             }
             distancia_final = leituras_hcsr[2];
 
+            if (distancia_final < 0.02 || distancia_final > 4.00) {// fora da faixa do datasheet (2cm-400cm): leitura nao confiavel, mesmo sem timeout
+                falha_sensor = 1;
+            }
+        }
+
+        if (falha_sensor == 0){
             snprintf(payload, sizeof(payload),
                 "{\"versao\":1,\"distancia_m\":%.3f,\"condutividade_us_cm\":%d,\"temperatura_c\":%.1f}",
                 distancia_final, condutividade_final, temperatura);
+        }
+        else{
+            snprintf(payload, sizeof(payload),
+                "{\"versao\":1,\"distancia_m\":null,\"condutividade_us_cm\":%d,\"temperatura_c\":%.1f}",
+                condutividade_final, temperatura);
         }
 
         printf("%s\n", payload);
