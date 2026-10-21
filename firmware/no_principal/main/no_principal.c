@@ -44,6 +44,7 @@ void app_main(void){
 
     int condutividade_final;
     float tensao_volts, temperatura = 25.0, coeficiente_compensacao, tensao_compensada, tds_ppm, condutividade_us_cm;
+    int64_t ultima_publicacao_mqtt = 0;
 
     adc_oneshot_unit_handle_t adc1_handle;
 
@@ -131,10 +132,9 @@ void app_main(void){
 
     while(1){
 
-        int mediana_bruta, leitura_bruta, tensao_mv, leituras_tds[10];
-
-        int falha_sensor = 0;
+        int falha_sensor = 0, mediana_bruta, leitura_bruta, tensao_mv, leituras_tds[10];
         float duracao, distancia_cm, distancia_m, distancia_final, leituras_hcsr[5];
+        char payload[96];
 
         for (int i = 0; i < 10; i++) {
 
@@ -219,16 +219,18 @@ void app_main(void){
             }
             distancia_final = leituras_hcsr[2];
 
-            printf("{\"versao\":1,\"distancia_m\":%.3f,\"condutividade_us_cm\":%d,\"temperatura_c\":%.1f}\n",
+            snprintf(payload, sizeof(payload),
+                "{\"versao\":1,\"distancia_m\":%.3f,\"condutividade_us_cm\":%d,\"temperatura_c\":%.1f}",
                 distancia_final, condutividade_final, temperatura);
-
-            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
-        else{
-            printf("{\"versao\":1,\"distancia_m\":null,\"condutividade_us_cm\":%d,\"temperatura_c\":%.1f}\n",
-                condutividade_final, temperatura);
 
-            vTaskDelay(100 / portTICK_PERIOD_MS);
+        printf("%s\n", payload);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+
+        int64_t agora = esp_timer_get_time();
+        if (agora - ultima_publicacao_mqtt >= (int64_t)CONFIG_TELEMETRY_INTERVAL_S * 1000000) {
+            esp_mqtt_client_publish(cliente_mqtt, "hidrico/principal/telemetria", payload, 0, 0, 0);
+            ultima_publicacao_mqtt = agora;
         }
     }
 }

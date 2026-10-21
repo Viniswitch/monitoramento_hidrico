@@ -6,4 +6,11 @@ menu "Configuracao do Projeto"
             Endereco do broker MQTT (notebook do Vinicius). Muda conforme a rede
             em uso (Wi-Fi da Unicap ou hotspot do celular) -- definir aqui via
             menuconfig, nunca gravar o valor real no codigo-fonte.
+    config TELEMETRY_INTERVAL_S
+        int "Intervalo de envio da telemetria (segundos)"
+        default 60
+        help
+            Intervalo entre publicacoes da telemetria no MQTT. O contrato
+            decide 60s em producao; 5s e permitido somente durante testes
+            de bancada.
 endmenu
