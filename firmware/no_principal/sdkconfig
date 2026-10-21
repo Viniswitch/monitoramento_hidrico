@@ -732,7 +732,7 @@ CONFIG_PARTITION_TABLE_MD5=y
 #
 # Configuracao do Projeto
 #
-CONFIG_BROKER_URL="mqtt://A-DEFINIR:1883"
+CONFIG_BROKER_URL="mqtt://192.168.15.8:1883"
 # end of Configuracao do Projeto
 
 #
