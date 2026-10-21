@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "mqtt_client.h"
 #include "esp_adc/adc_oneshot.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -12,6 +13,8 @@
 #include "esp_wifi.h"
 #include "credenciais_wifi.h"
 
+esp_mqtt_client_handle_t cliente_mqtt;
+
 void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
 
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) { // driver Wi-Fi acabou de iniciar
@@ -24,8 +27,18 @@ void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id
 
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {// recebeu um endereco IP: esta conectado de verdade
         printf("Conectado na rede !\n");
+        esp_mqtt_client_start(cliente_mqtt);
     }
 }
+
+void mqtt_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    switch (event_id) {
+        case MQTT_EVENT_CONNECTED:
+            esp_mqtt_client_publish(cliente_mqtt, "hidrico/principal/status", "online", 0, 1, 1);
+            break;
+    }
+}
+
 
 void app_main(void){
 
@@ -90,6 +103,16 @@ void app_main(void){
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    esp_mqtt_client_config_t mqtt_cfg = {
+       .broker.address.uri = CONFIG_BROKER_URL,
+       .credentials.client_id = "principal",
+       .session.keepalive = 15,
+       .session.last_will = {.topic = "hidrico/principal/status", .msg = "offline", .qos = 1, .retain = 1,},
+    };
+
+   cliente_mqtt = esp_mqtt_client_init(&mqtt_cfg);
+   esp_mqtt_client_register_event(cliente_mqtt, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
 
     esp_event_handler_instance_t instancia_wifi, instancia_ip;
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, &instancia_wifi));

@@ -1,0 +1,9 @@
+menu "Configuracao do Projeto"
+    config BROKER_URL
+        string "URL do broker MQTT"
+        default "mqtt://A-DEFINIR:1883"
+        help
+            Endereco do broker MQTT (notebook do Vinicius). Muda conforme a rede
+            em uso (Wi-Fi da Unicap ou hotspot do celular) -- definir aqui via
+            menuconfig, nunca gravar o valor real no codigo-fonte.
+endmenu
