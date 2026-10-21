@@ -5,4 +5,5 @@ __pycache__/
 .idea/
 build/
 sdkconfig.old
-   
+**/credenciais_wifi.h
+firmware/no_principal/.vscode/
