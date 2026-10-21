@@ -4,4 +4,5 @@ docs/originais/
 __pycache__/
 .idea/
 build/
+sdkconfig.old
    
